@@ -11,91 +11,134 @@ public class Solution {
         return str;
     }
 
-    void genStrings(int[] ins, List<String> strings) {
-
-        int[] ibk = new int[ins.length];
-
-        for(int i = 0; i < ins.length; i++) {
-            ibk[i] = ins[i];
-        }
-
-        for(int i = 0; i < ins.length; i++) {
-            ibk[i] = ins[i] + 1 < 10 ? ins[i] + 1 : 0;
-            String str = toStr(ibk);
-            strings.add(str);
-            ibk[i] = ins[i] - 1 > -1 ? ins[i] - 1 : 9;
-            str = toStr(ibk);
-            strings.add(str);
-            ibk[i] = ins[i];
-        }
-    }
-
     boolean isDead(String[] deadends, String str) {
 
         for(var s : deadends) {
-            if(s.equals(str)) {
+            if(s.equals(str))
                 return true;
-            }
         }
 
         return false;
     }
 
+    int[] strToIntArray(String str) {
+        char[] chr = str.toCharArray();
+
+        int[] ins = new int[chr.length];
+
+        for(int j = 0; j < chr.length; j++)
+            ins[j] = Character.getNumericValue(chr[j]);
+
+        return ins;
+    }
+
+    List<String> genStrings(int[] ints) {
+
+        List<String> strings = new ArrayList<>();
+
+        int[] res = new int[ints.length];
+
+        for(int i = 0; i < ints.length; i++)
+            res[i] = ints[i];
+
+        for(int i = 0; i < ints.length; i++) {
+            res[i] = ints[i] + 1 < 10 ? ints[i] + 1 : 0;
+            strings.add(toStr(res));
+
+            res[i] = ints[i] - 1 > -1 ? ints[i] - 1 : 9;
+            strings.add(toStr(res));
+
+            res[i] = ints[i];
+        }
+
+        return strings;
+    }
+
+    List<String> computeAdj(String str) {
+        int[] intArray = strToIntArray(str);
+
+        return genStrings(intArray);
+    }
+
+    int popAndPush(Queue<String> queue, Set<String> set, Set<String> setRef, int path, int pathRef, String[] deadends, String target) {
+        int size = queue.size();
+
+        for(int i = 0; i < size; i++) {
+
+            // Pop element from queue
+            String str = queue.poll();
+
+            // Search complete
+            if(set.contains(str) && setRef.contains(str))
+                return path + pathRef;
+
+            // One-directional search found target early
+            if(str.equals(target))
+                return path;
+
+            // Compute adjacent sequences and add them to queue
+            List<String> strings = computeAdj(str);
+
+            for(var s : strings) {
+
+                // Check if sequence has been tried
+                if(set.contains(s))
+                    continue;
+
+                set.add(s);
+
+                // Add sequence to queue
+                if(!isDead(deadends, s)) {
+                    queue.add(s);
+                }
+            }
+        }
+
+        return -1;
+    }
+
     public int openLock(String[] deadends, String target) {
 
-        Set<String> set = new HashSet<>();
+        Set<String> setA = new HashSet<>();
+        Set<String> setB = new HashSet<>();
 
-        Queue<String> queue = new LinkedList<>();
+        Queue<String> queueA = new LinkedList<>();
+        Queue<String> queueB = new LinkedList<>();
 
         String strInit = "0000";
 
+        // Initial sequence is a deadend
         if(isDead(deadends, strInit)) {
             return -1;
         }
 
-        queue.add(strInit);
+        // Perform bidirectional breadth-first search
+        queueA.add(strInit);
+        queueB.add(target);
 
-        int path = 0;
+        int pathA = 0;
+        int pathB = 0;
 
-        while(!queue.isEmpty()) {
+        while(!queueA.isEmpty() && !queueB.isEmpty()) {
 
-            int size = queue.size();
+            int val = -1;
 
-            for(int i = 0; i < size; i++) {
+            // Search graph starting from strInit
+            val = popAndPush(queueA, setA, setB, pathA, pathB, deadends, target);
 
-                String str = queue.poll();
+            pathA++;
 
-                if(str.equals(target)) {
-                    return path;
-                }
+            if(val != -1)
+                return val;
 
-                char[] chr = str.toCharArray();
+            // Search graph starting from target
+            val = popAndPush(queueB, setB, setA, pathB, pathA, deadends, strInit);
 
-                int[] ins = new int[chr.length];
+            pathB++;
 
-                for(int j = 0; j < chr.length; j++) {
-                    ins[j] = Character.getNumericValue(chr[j]);
-                }
-                List<String> strings = new ArrayList<>();
-                List<Integer> ints = new ArrayList<>();
+            if(val != -1)
+                return val;
 
-                genStrings(ins, strings);
-
-                for(var s : strings) {
-
-                    if(set.contains(s)) {
-                        continue;
-                    }
-
-                    set.add(s);
-
-                    if(!s.equals(str) && !isDead(deadends, s)) {
-                        queue.add(s);
-                    }
-                }
-            }
-
-            path++;
         }
 
         return -1;
