@@ -11,64 +11,62 @@
 
 using namespace std;
 
+typedef enum Color {
+    BLUE = 2,
+    RED = 1,
+    DEF = 0,
+} cl;
+
 typedef struct Node {
-    int node;
-    int list;
+    int id;
+    cl color;
 } nd;
 
 class Solution {
 public:
     bool isBipartite(vector<vector<int>> & graph) {
         
-        int n = (int) graph.size();
-        vector<vector<int>> adjList = graph;
-        vector<bool> visited;
-        vector<int> group;
+        int n = graph.size();
         
-        for(int i = 0; i < n; i++) {
-            vector<int> listLoc;
-            adjList.push_back(listLoc);
-            visited.push_back(false);
-            group.push_back(-1);
-        }
+        vector<bool> visited(n, false);
         
-        visited[0] = true;
-
-        // DFS
-        stack<nd> stash;
-        stash.push({0, 1});
-        group[0] = 1;
-        bool allFound = false;
-        while(!stash.empty()) {
-            nd node = stash.top();
-            stash.pop();
-            visited[node.node] = true;
-            allFound = true;
-            for(auto e : visited)
-                if(!e)
-                    allFound = false;
-            for(auto e : adjList[node.node]) {
-                if(group[e] == group[node.node])
-                    return false;
-                if(visited[e])
-                    continue;
-                if(node.list == 1) {
-                    group[e] = 2;
-                    stash.push({e, 2});
-                }
-                if(node.list == 2) {
-                    group[e] = 1;
-                    stash.push({e, 1});
-                }
-            }
+        for(int p = 0; p < n; p++) {
             
-            if(stash.empty() && !allFound) {
-                int count = 1;
-                while(count < n && visited[count]) {
-                    count++;
+            vector<cl> colors(n, DEF);
+            
+            nd start = {p, BLUE};
+
+            queue<nd> queue;
+
+            queue.push(start);
+
+            while(!queue.empty()) {
+
+                int size = queue.size();
+
+                for(int k = 0; k < size; k++) {
+                    nd node = queue.front();
+                    queue.pop();
+
+                    int id = node.id;
+                    cl color = node.color;
+
+                    visited[id] = true;
+                    colors[id] = color;
+
+                    for(auto e : graph[id]) {
+                        if(visited[e] && colors[id] == colors[e])
+                            return false;
+                        if(!visited[e] && color == BLUE) {
+                            nd nodeLoc = {e, RED};
+                            queue.push(nodeLoc);
+                        }
+                        if(!visited[e] && color == RED) {
+                            nd nodeLoc = {e, BLUE};
+                            queue.push(nodeLoc);
+                        }
+                    }
                 }
-                stash.push({count, 1});
-                group[count] = 1;
             }
         }
         
