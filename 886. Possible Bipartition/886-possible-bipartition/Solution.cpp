@@ -33,7 +33,7 @@ public:
             graph[v[1]].push_back(v[0]);
         }
         
-        vector<bool> visited(n, false);
+        vector<bool> visited(n + 1, false);
         
         // Perform breadth-first search starting from each node
         for(int p = 1; p <= n; p++) {
@@ -46,31 +46,26 @@ public:
             queue.push(start);
             
             while(!queue.empty()) {
+                nd node = queue.front();
+                queue.pop();
 
-                int size = queue.size();
+                int id = node.id;
+                cl color = node.color;
 
-                for(int k = 0; k < size; k++) {
-                    nd node = queue.front();
-                    queue.pop();
+                visited[id] = true;
+                colors[id] = color;
 
-                    int id = node.id;
-                    cl color = node.color;
-
-                    visited[id] = true;
-                    colors[id] = color;
-
-                    for(auto e : graph[id]) {
-                        // Graph is not bipartite
-                        if(visited[e] && colors[id] == colors[e])
-                            return false;
-                        if(!visited[e] && color == BLUE) {
-                            nd nodeLoc = {e, RED};
-                            queue.push(nodeLoc);
-                        }
-                        if(!visited[e] && color == RED) {
-                            nd nodeLoc = {e, BLUE};
-                            queue.push(nodeLoc);
-                        }
+                for(auto e : graph[id]) {
+                    // Graph is not bipartite
+                    if(visited[e] && colors[id] == colors[e])
+                        return false;
+                    if(!visited[e] && color == BLUE) {
+                        nd nodeLoc = {e, RED};
+                        queue.push(nodeLoc);
+                    }
+                    if(!visited[e] && color == RED) {
+                        nd nodeLoc = {e, BLUE};
+                        queue.push(nodeLoc);
                     }
                 }
             }
